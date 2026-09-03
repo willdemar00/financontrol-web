@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lançamentos | FinanControl</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="layout">
+    <aside class="menu-lateral" id="menu-lateral"></aside>
+
+    <div class="conteudo">
+      <header class="barra-topo">
+        <div>
+          <h1>Lançamentos</h1>
+          <p class="contexto" id="contexto">Carregando...</p>
+        </div>
+        <div class="acoes-topo">
+          <label class="botao botao-contorno" for="mes" style="gap:7px">
+            <svg class="icone icone-p" viewBox="0 0 24 24">
+              <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>
+            </svg>
+            <input type="month" id="mes" style="border:0;outline:0;font:inherit;font-weight:600;background:transparent">
+          </label>
+          <button class="botao botao-primario" id="btn-novo">
+            <svg class="icone icone-p" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Novo lançamento
+          </button>
+        </div>
+      </header>
+
+      <main class="corpo">
+        <!-- filtros -->
+        <div style="display:flex;gap:9px;margin-bottom:13px;flex-wrap:wrap">
+          <div class="entrada" style="flex:1;min-width:220px;height:36px">
+            <svg class="icone icone-p" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            <input type="search" id="busca" placeholder="Buscar por descrição ou categoria...">
+          </div>
+          <div class="entrada" style="height:36px;width:170px">
+            <select id="filtro-tipo">
+              <option value="">Todos os tipos</option>
+              <option value="receita">Somente receitas</option>
+              <option value="despesa">Somente despesas</option>
+            </select>
+          </div>
+        </div>
+
+        <section class="cartao">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th style="width:34%">Descrição</th>
+                <th>Categoria</th>
+                <th>Forma de pagamento</th>
+                <th style="text-align:right">Valor</th>
+                <th style="width:70px"></th>
+              </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+          </table>
+          <div class="cartao-rodape" id="totalizador">--</div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ============================ modal de lançamento ============================ -->
+  <div class="fundo-modal" id="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-topo">
+        <div>
+          <h3 id="modal-titulo">Novo lançamento</h3>
+          <p>Registre uma receita ou despesa do mês.</p>
+        </div>
+        <button class="fechar" id="btn-fechar" aria-label="Fechar">
+          <svg class="icone" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-lancamento" novalidate>
+        <input type="hidden" id="id">
+
+        <div class="seletor-tipo">
+          <button type="button" data-tipo="receita" id="aba-receita">
+            <svg class="icone icone-p" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Receita
+          </button>
+          <button type="button" data-tipo="despesa" id="aba-despesa">
+            <svg class="icone icone-p" viewBox="0 0 24 24" style="color:var(--negativo)">
+              <path d="M12 5v14M5 12l7 7 7-7"/></svg>Despesa
+          </button>
+        </div>
+
+        <div class="campo">
+          <label for="valor">Valor</label>
+          <div class="entrada alta">
+            <span class="prefixo">R$</span>
+            <input type="number" id="valor" step="0.01" min="0.01" placeholder="0,00" required>
+          </div>
+        </div>
+
+        <div class="linha-2" style="margin-top:14px">
+          <div class="campo" style="margin-top:0">
+            <label for="data">Data</label>
+            <div class="entrada">
+              <input type="date" id="data" required>
+            </div>
+          </div>
+          <div class="campo" style="margin-top:0">
+            <label for="categoria">Categoria</label>
+            <div class="entrada">
+              <select id="categoria" required></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="descricao">Descrição</label>
+          <div class="entrada">
+            <input type="text" id="descricao" maxlength="80" placeholder="Ex.: Supermercado" required>
+          </div>
+        </div>
+
+        <div class="campo" id="bloco-pagamento">
+          <label for="pagamento">Forma de pagamento</label>
+          <div class="entrada">
+            <select id="pagamento"></select>
+          </div>
+        </div>
+
+        <label class="marcador">
+          <input type="checkbox" id="fixa">
+          <span id="texto-fixa">Marcar como despesa fixa (repete todo mês)</span>
+        </label>
+
+        <p class="aviso" id="aviso" role="alert"></p>
+
+        <div class="botoes-modal">
+          <button type="button" class="botao botao-contorno" id="btn-cancelar">Cancelar</button>
+          <button type="submit" class="botao botao-primario">Salvar lançamento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/dados.js"></script>
+  <script src="js/comum.js"></script>
+  <script src="js/lancamentos.js"></script>
+</body>
+</html>
