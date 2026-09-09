@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metas | FinanControl</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="layout">
+    <aside class="menu-lateral" id="menu-lateral"></aside>
+
+    <div class="conteudo">
+      <header class="barra-topo">
+        <div>
+          <h1>Metas financeiras</h1>
+          <p class="contexto" id="contexto">Carregando...</p>
+        </div>
+        <div class="acoes-topo">
+          <button class="botao botao-primario" id="btn-nova">
+            <svg class="icone icone-p" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Nova meta
+          </button>
+        </div>
+      </header>
+
+      <main class="corpo">
+        <section class="grade-3">
+          <article class="cartao indicador">
+            <div class="rotulo">Total guardado</div>
+            <div class="valor" id="total-guardado">R$ 0,00</div>
+            <div class="compara" id="info-guardado">--</div>
+          </article>
+          <article class="cartao indicador">
+            <div class="rotulo">Meta mais próxima</div>
+            <div class="valor" style="font-size:19px" id="mais-proxima">--</div>
+            <div class="compara" id="info-proxima">--</div>
+          </article>
+          <article class="cartao indicador">
+            <div class="rotulo">Objetivo total</div>
+            <div class="valor" id="objetivo-total">R$ 0,00</div>
+            <div class="compara" id="info-objetivo">--</div>
+          </article>
+        </section>
+
+        <section class="cartao" style="margin-top:14px">
+          <div class="cartao-topo" style="padding-bottom:12px">
+            <div>
+              <div class="cartao-titulo">Minhas metas</div>
+              <div class="cartao-desc" id="resumo-metas">--</div>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:30%">Meta</th>
+                <th style="width:24%">Progresso</th>
+                <th style="text-align:right">Acumulado</th>
+                <th style="text-align:right">Objetivo</th>
+                <th>Prazo</th>
+                <th>Situação</th>
+                <th style="width:70px"></th>
+              </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- =========================== modal de meta =========================== -->
+  <div class="fundo-modal" id="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-topo">
+        <div>
+          <h3 id="modal-titulo">Nova meta</h3>
+          <p>Defina um objetivo de economia e acompanhe o progresso.</p>
+        </div>
+        <button class="fechar" id="btn-fechar" aria-label="Fechar">
+          <svg class="icone" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-meta" novalidate>
+        <input type="hidden" id="id">
+
+        <div class="campo">
+          <label for="descricao">Descrição da meta</label>
+          <div class="entrada">
+            <input type="text" id="descricao" maxlength="60" placeholder="Ex.: Reserva de emergência" required>
+          </div>
+        </div>
+
+        <div class="linha-2" style="margin-top:14px">
+          <div class="campo" style="margin-top:0">
+            <label for="alvo">Valor objetivo</label>
+            <div class="entrada">
+              <span class="prefixo">R$</span>
+              <input type="number" id="alvo" step="0.01" min="0.01" placeholder="0,00" required>
+            </div>
+          </div>
+          <div class="campo" style="margin-top:0">
+            <label for="atual">Já guardado</label>
+            <div class="entrada">
+              <span class="prefixo">R$</span>
+              <input type="number" id="atual" step="0.01" min="0" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="linha-2" style="margin-top:14px">
+          <div class="campo" style="margin-top:0">
+            <label for="prazo">Prazo</label>
+            <div class="entrada">
+              <input type="month" id="prazo" required>
+            </div>
+          </div>
+          <div class="campo" style="margin-top:0">
+            <label for="prioridade">Prioridade</label>
+            <div class="entrada">
+              <select id="prioridade">
+                <option>Alta</option>
+                <option selected>Média</option>
+                <option>Baixa</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <p class="aviso" id="aviso" role="alert"></p>
+
+        <div class="botoes-modal">
+          <button type="button" class="botao botao-contorno" id="btn-cancelar">Cancelar</button>
+          <button type="submit" class="botao botao-primario">Salvar meta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/dados.js"></script>
+  <script src="js/comum.js"></script>
+  <script src="js/metas.js"></script>
+</body>
+</html>
