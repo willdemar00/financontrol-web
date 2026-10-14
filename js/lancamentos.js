@@ -3,8 +3,12 @@
    Requisitos atendidos:
      RF03 - registro de receitas
      RF04 - registro de despesas
-     RF05 - categorizacao dos lançamentos
+     RF05 - categorizacao dos lançamentos (categorias vindas da API)
      RF09 - edicao e exclusao de lançamentos
+   --------------------------------------------------------------------------
+   Os lançamentos do mês escolhido sao buscados na API uma vez; a busca por
+   texto e o filtro por tipo sao aplicados na própria tela, sem novas
+   requisicoes, para a resposta ser imediata.
    ========================================================================== */
 
 (function () {
@@ -19,6 +23,8 @@
   const campoMes = document.getElementById('mes');
   const campoBusca = document.getElementById('busca');
   const filtroTipo = document.getElementById('filtro-tipo');
+  const botaoSalvar = form.querySelector('button[type="submit"]');
+  const corpo = document.getElementById('lista');
 
   const campos = {
     id: document.getElementById('id'),
@@ -31,29 +37,45 @@
   };
 
   let tipoSelecionado = 'despesa';
+  let categorias = [];
+  let lancamentosDoMes = [];
 
   campoMes.value = Comum.mesAtual();
-  campoMes.addEventListener('change', desenhar);
+  campoMes.addEventListener('change', function () { Comum.carregar(carregarMes); });
   campoBusca.addEventListener('input', desenhar);
   filtroTipo.addEventListener('change', desenhar);
 
   /* ---------------------------------------------------------------- modal */
 
-  function preencherSelect(select, itens, selecionado) {
-    select.innerHTML = itens.map(function (item) {
-      const marca = item === selecionado ? ' selected' : '';
-      return '<option value="' + item + '"' + marca + '>' + item + '</option>';
+  function mostrarAviso(mensagem) {
+    aviso.textContent = mensagem;
+    aviso.className = 'aviso erro';
+  }
+
+  function preencherPagamentos(selecionado) {
+    campos.pagamento.innerHTML = Dados.FORMAS_PAGAMENTO.map(function (forma) {
+      const marca = forma === selecionado ? ' selected' : '';
+      return '<option value="' + forma + '"' + marca + '>' + forma + '</option>';
     }).join('');
   }
 
-  function definirTipo(tipo) {
+  /* As opções de categoria dependem do tipo (receita ou despesa). */
+  function preencherCategorias(selecionada) {
+    const doTipo = categorias.filter(function (c) { return c.tipo === tipoSelecionado; });
+
+    campos.categoria.innerHTML = doTipo.map(function (c) {
+      const marca = c.id === Number(selecionada) ? ' selected' : '';
+      return '<option value="' + c.id + '"' + marca + '>' + Comum.escapar(c.nome) + '</option>';
+    }).join('');
+  }
+
+  function definirTipo(tipo, categoriaId) {
     tipoSelecionado = tipo;
 
     document.getElementById('aba-receita').classList.toggle('ativo', tipo === 'receita');
     document.getElementById('aba-despesa').classList.toggle('ativo', tipo === 'despesa');
 
-    const lista = tipo === 'receita' ? Dados.CATEGORIAS_RECEITA : Dados.CATEGORIAS_DESPESA;
-    preencherSelect(campos.categoria, lista, campos.categoria.value);
+    preencherCategorias(categoriaId);
 
     document.getElementById('texto-fixa').textContent = tipo === 'receita'
       ? 'Marcar como receita recorrente (repete todo mês)'
@@ -65,8 +87,6 @@
     form.reset();
     campos.id.value = '';
 
-    preencherSelect(campos.pagamento, Dados.FORMAS_PAGAMENTO);
-
     if (lancamento) {
       document.getElementById('modal-titulo').textContent = 'Editar lançamento';
       campos.id.value = lancamento.id;
@@ -74,13 +94,13 @@
       campos.data.value = lancamento.data;
       campos.descricao.value = lancamento.descricao;
       campos.fixa.checked = Boolean(lancamento.fixa);
-      definirTipo(lancamento.tipo);
-      campos.categoria.value = lancamento.categoria;
-      campos.pagamento.value = lancamento.formaPagamento || Dados.FORMAS_PAGAMENTO[0];
+      definirTipo(lancamento.tipo, lancamento.categoriaId);
+      preencherPagamentos(lancamento.formaPagamento || Dados.FORMAS_PAGAMENTO[0]);
     } else {
       document.getElementById('modal-titulo').textContent = 'Novo lançamento';
       campos.data.value = new Date().toISOString().slice(0, 10);
       definirTipo(tipoSelecionado);
+      preencherPagamentos(Dados.FORMAS_PAGAMENTO[0]);
     }
 
     modal.classList.add('aberto');
@@ -108,57 +128,67 @@
 
   /* -------------------------------------------------------------- salvar */
 
-  form.addEventListener('submit', function (evento) {
+  form.addEventListener('submit', async function (evento) {
     evento.preventDefault();
 
     const valor = Number(campos.valor.value);
 
     /* RN - o valor precisa ser maior que zero. */
     if (!valor || valor <= 0) {
-      aviso.textContent = 'Informe um valor maior que zero.';
-      aviso.className = 'aviso erro';
+      mostrarAviso('Informe um valor maior que zero.');
       campos.valor.focus();
       return;
     }
 
     if (!campos.data.value) {
-      aviso.textContent = 'Informe a data do lançamento.';
-      aviso.className = 'aviso erro';
+      mostrarAviso('Informe a data do lançamento.');
       return;
     }
 
     if (!campos.descricao.value.trim()) {
-      aviso.textContent = 'Informe uma descrição para o lançamento.';
-      aviso.className = 'aviso erro';
+      mostrarAviso('Informe uma descrição para o lançamento.');
       return;
     }
 
-    Dados.salvarLancamento({
-      id: campos.id.value || undefined,
-      tipo: tipoSelecionado,
-      valor: valor,
-      data: campos.data.value,
-      descricao: campos.descricao.value.trim(),
-      categoria: campos.categoria.value,
-      formaPagamento: campos.pagamento.value,
-      fixa: campos.fixa.checked
-    });
+    if (!campos.categoria.value) {
+      mostrarAviso('Cadastre uma categoria de ' + tipoSelecionado + ' na tela Categorias antes de continuar.');
+      return;
+    }
+
+    botaoSalvar.disabled = true;
+
+    try {
+      await Dados.salvarLancamento({
+        id: campos.id.value || undefined,
+        tipo: tipoSelecionado,
+        valor: valor,
+        data: campos.data.value,
+        descricao: campos.descricao.value.trim(),
+        categoriaId: Number(campos.categoria.value),
+        formaPagamento: campos.pagamento.value,
+        fixa: campos.fixa.checked
+      });
+    } catch (erro) {
+      mostrarAviso(erro.message);
+      return;
+    } finally {
+      botaoSalvar.disabled = false;
+    }
 
     /* Leva o usuário para o mês do lançamento salvo. */
     campoMes.value = campos.data.value.slice(0, 7);
 
     fecharModal();
-    desenhar();
+    Comum.carregar(carregarMes);
   });
 
   /* ------------------------------------------------------------- listagem */
 
   function filtrar() {
-    const mes = campoMes.value || Comum.mesAtual();
     const termo = campoBusca.value.trim().toLowerCase();
     const tipo = filtroTipo.value;
 
-    return Dados.lancamentosDoMes(mes).filter(function (l) {
+    return lancamentosDoMes.filter(function (l) {
       if (tipo && l.tipo !== tipo) return false;
       if (!termo) return true;
       return (l.descricao + ' ' + l.categoria).toLowerCase().indexOf(termo) >= 0;
@@ -167,17 +197,15 @@
 
   function desenhar() {
     const lista = filtrar();
-    const corpo = document.getElementById('lista');
     const mes = campoMes.value || Comum.mesAtual();
-    const resumo = Dados.resumoDoMes(mes);
+    const quantidade = lancamentosDoMes.length;
 
     document.getElementById('contexto').textContent =
-      resumo.quantidade + ' lançamento' + (resumo.quantidade === 1 ? '' : 's') +
-      ' em ' + Comum.nomeDoMes(mes);
+      quantidade + ' lançamento' + (quantidade === 1 ? '' : 's') + ' em ' + Comum.nomeDoMes(mes);
 
     if (lista.length === 0) {
       corpo.innerHTML = '<tr><td colspan="6" class="vazio">' +
-        (resumo.quantidade === 0
+        (quantidade === 0
           ? 'Nenhum lançamento neste mês. Clique em "Novo lançamento" para registrar o primeiro.'
           : 'Nenhum lançamento corresponde ao filtro aplicado.') +
         '</td></tr>';
@@ -223,33 +251,53 @@
     ligarAcoes();
   }
 
+  function procurar(id) {
+    return lancamentosDoMes.find(function (l) { return l.id === Number(id); }) || null;
+  }
+
   function ligarAcoes() {
     document.querySelectorAll('[data-editar]').forEach(function (botao) {
       botao.addEventListener('click', function () {
-        abrirModal(Dados.buscarLancamento(botao.dataset.editar));
+        abrirModal(procurar(botao.dataset.editar));
       });
     });
 
     document.querySelectorAll('[data-excluir]').forEach(function (botao) {
       botao.addEventListener('click', function () {
-        const lancamento = Dados.buscarLancamento(botao.dataset.excluir);
+        const lancamento = procurar(botao.dataset.excluir);
         if (!lancamento) return;
-        if (confirm('Excluir o lançamento "' + lancamento.descricao + '"?')) {
-          Dados.removerLancamento(lancamento.id);
-          desenhar();
-        }
+        if (!confirm('Excluir o lançamento "' + lancamento.descricao + '"?')) return;
+
+        Comum.carregar(async function () {
+          await Dados.removerLancamento(lancamento.id);
+          await carregarMes();
+        });
       });
     });
+  }
+
+  /* ---------------------------------------------------------- carregamento */
+
+  async function carregarMes() {
+    lancamentosDoMes = await Dados.lancamentosDoMes(campoMes.value || Comum.mesAtual());
+    desenhar();
   }
 
   /* Permite abrir o modal direto pela URL, vindo dos atalhos do painel. */
   const parametros = new URLSearchParams(window.location.search);
   const novo = parametros.get('novo');
 
-  desenhar();
+  Comum.linhaCarregando(corpo, 6);
 
-  if (novo) {
-    if (novo === 'receita' || novo === 'despesa') tipoSelecionado = novo;
-    abrirModal(null);
-  }
+  Comum.carregar(async function () {
+    const respostas = await Promise.all([Dados.listarCategorias(), Dados.lancamentosDoMes(campoMes.value)]);
+    categorias = respostas[0];
+    lancamentosDoMes = respostas[1];
+    desenhar();
+
+    if (novo) {
+      if (novo === 'receita' || novo === 'despesa') tipoSelecionado = novo;
+      abrirModal(null);
+    }
+  });
 })();
