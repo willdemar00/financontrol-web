@@ -4,6 +4,10 @@
      RF07 - relatórios financeiros mensais
      RF08 - gráficos de receitas e despesas
      RF12 - exportação dos relatorios (arquivo CSV)
+   --------------------------------------------------------------------------
+   Os totais por mês e por categoria sao calculados pela API
+   (GET /api/relatorios/evolucao e /api/relatorios/categorias); esta tela
+   apenas desenha os gráficos em SVG.
    ========================================================================== */
 
 (function () {
@@ -16,23 +20,13 @@
 
   const campoMes = document.getElementById('mes');
   campoMes.value = Comum.mesAtual();
-  campoMes.addEventListener('change', desenhar);
-
-  /* Devolve os 6 meses que terminam no mês informado. */
-  function ultimosSeisMeses(mes) {
-    const meses = [mes];
-    for (let i = 0; i < 5; i++) {
-      meses.unshift(Comum.mesAnterior(meses[0]));
-    }
-    return meses;
-  }
+  campoMes.addEventListener('change', function () { Comum.carregar(desenhar); });
 
   /* ------------------------------------------------- gráfico de barras */
 
-  function desenharBarras(mes) {
+  function desenharBarras(mes, resumos) {
     const svg = document.getElementById('grafico-barras');
-    const meses = ultimosSeisMeses(mes);
-    const resumos = meses.map(function (m) { return Dados.resumoDoMes(m); });
+    const meses = resumos.map(function (r) { return r.mes; });
 
     const maximo = Math.max(
       1,
@@ -82,11 +76,11 @@
 
   /* --------------------------------------------------- gráfico de rosca */
 
-  function desenharRosca(mes) {
+  function desenharRosca(mes, relatorio) {
     const svg = document.getElementById('rosca');
     const legenda = document.getElementById('legenda-categoria');
-    const categorias = Dados.totaisPorCategoria(mes);
-    const total = categorias.reduce(function (soma, c) { return soma + c.total; }, 0);
+    const categorias = relatorio.categorias;
+    const total = relatorio.total;
 
     if (total === 0) {
       svg.innerHTML = '<circle cx="60" cy="60" r="46" fill="none" stroke="#f4f4f5" stroke-width="17"/>' +
@@ -135,12 +129,13 @@
 
   /* ------------------------------------------------------------- tabela */
 
-  function desenharTabela(mes) {
+  function desenharTabela(mes, relatorio) {
     const corpo = document.getElementById('tabela-categorias');
-    const mesPassado = Comum.mesAnterior(mes);
-    const categorias = Dados.totaisPorCategoria(mes);
-    const anteriores = Dados.totaisPorCategoria(mesPassado);
-    const total = categorias.reduce(function (soma, c) { return soma + c.total; }, 0);
+    const mesPassado = relatorio.mesAnterior;
+    const categorias = relatorio.categorias;
+
+    document.getElementById('desc-resumo').textContent =
+      Comum.nomeDoMes(mes) + ' comparado a ' + Comum.nomeDoMes(mesPassado);
 
     if (categorias.length === 0) {
       corpo.innerHTML = '<tr><td colspan="5" class="vazio">' +
@@ -148,20 +143,13 @@
       return;
     }
 
-    const lancamentos = Dados.lancamentosDoMes(mes);
-
     corpo.innerHTML = categorias.map(function (c, i) {
-      const quantidade = lancamentos.filter(function (l) {
-        return l.tipo === 'despesa' && l.categoria === c.categoria;
-      }).length;
-
-      const anterior = anteriores.find(function (a) { return a.categoria === c.categoria; });
-      const valorAnterior = anterior ? anterior.total : 0;
-      const porcentagem = Math.round((c.total / total) * 100);
+      const quantidade = c.quantidade;
+      const porcentagem = Math.round(c.percentual);
 
       let comparativo = '<span class="etiqueta">novo</span>';
-      if (valorAnterior > 0) {
-        const variacao = ((c.total - valorAnterior) / valorAnterior) * 100;
+      if (c.variacao !== null) {
+        const variacao = c.variacao;
         const subiu = variacao > 0;
         const classe = subiu ? 'etiqueta-negativa' : 'etiqueta-positiva';
         comparativo = '<span class="etiqueta ' + (Math.abs(variacao) < 0.5 ? '' : classe) + '">' +
@@ -177,9 +165,6 @@
         '<td style="text-align:right">' + comparativo + '</td>' +
       '</tr>';
     }).join('');
-
-    document.getElementById('desc-resumo').textContent =
-      Comum.nomeDoMes(mes) + ' comparado a ' + Comum.nomeDoMes(mesPassado);
   }
 
   /* ---------------------------------------------------- exportação CSV */
@@ -221,17 +206,25 @@
 
   /* ------------------------------------------------------------ desenhar */
 
-  function desenhar() {
+  async function desenhar() {
     const mes = campoMes.value || Comum.mesAtual();
-    const resumo = Dados.resumoDoMes(mes);
+
+    const respostas = await Promise.all([
+      Dados.evolucao(mes, 6),
+      Dados.totaisPorCategoria(mes, 'despesa')
+    ]);
+    const evolucao = respostas[0];
+    const porCategoria = respostas[1];
+    const resumo = evolucao[evolucao.length - 1];
 
     document.getElementById('contexto').textContent =
       Comum.nomeDoMes(mes) + ' · saldo de ' + Comum.moeda(resumo.saldo);
 
-    desenharBarras(mes);
-    desenharRosca(mes);
-    desenharTabela(mes);
+    desenharBarras(mes, evolucao);
+    desenharRosca(mes, porCategoria);
+    desenharTabela(mes, porCategoria);
   }
 
-  desenhar();
+  Comum.linhaCarregando(document.getElementById('tabela-categorias'), 5);
+  Comum.carregar(desenhar);
 })();
