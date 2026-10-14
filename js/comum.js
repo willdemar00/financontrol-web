@@ -123,14 +123,64 @@ const Comum = (function () {
     });
   }
 
-  /* Inicializa qualquer página interna: válida sessao, cria dados de exemplo
-     na primeira visita e desenha o menu lateral. */
+  /* Inicializa qualquer página interna: valida a sessao e desenha o menu
+     lateral. Os dados de cada tela agora vem da API. */
   function iniciarPagina(paginaAtiva) {
     const sessao = exigirLogin();
     if (!sessao) return null;
-    Dados.semearExemplos();
     montarMenu(paginaAtiva, sessao);
     return sessao;
+  }
+
+  /* --------------------------------------- carregamento e falhas da API */
+
+  const ICONE_ALERTA = '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>';
+
+  /* Faixa vermelha no topo da página, usada quando a API não responde ou
+     devolve um erro ao carregar os dados da tela. */
+  function mostrarFalha(erro) {
+    let faixa = document.getElementById('faixa-falha');
+
+    if (!faixa) {
+      faixa = document.createElement('div');
+      faixa.id = 'faixa-falha';
+      faixa.className = 'faixa-falha';
+      faixa.setAttribute('role', 'alert');
+      const alvo = document.querySelector('.conteudo') || document.body;
+      alvo.insertBefore(faixa, alvo.firstChild);
+    }
+
+    const mensagem = erro && erro.message ? erro.message : 'Não foi possível carregar os dados.';
+    faixa.innerHTML = svg(ICONE_ALERTA) + '<span>' + escapar(mensagem) + '</span>' +
+      '<button type="button" class="botao botao-contorno botao-p">Tentar novamente</button>';
+    faixa.querySelector('button').addEventListener('click', function () {
+      window.location.reload();
+    });
+  }
+
+  function esconderFalha() {
+    const faixa = document.getElementById('faixa-falha');
+    if (faixa) faixa.remove();
+  }
+
+  /* Mensagem de "Carregando..." dentro de uma tabela. */
+  function linhaCarregando(corpo, colunas) {
+    corpo.innerHTML = '<tr><td colspan="' + colunas + '" class="vazio">Carregando...</td></tr>';
+  }
+
+  /* Executa o carregamento de uma tela mostrando a barra de progresso no topo
+     e, se algo der errado, a faixa de falha. */
+  async function carregar(tarefa) {
+    document.body.classList.add('carregando');
+    try {
+      await tarefa();
+      esconderFalha();
+    } catch (erro) {
+      console.error(erro);
+      mostrarFalha(erro);
+    } finally {
+      document.body.classList.remove('carregando');
+    }
   }
 
   return {
@@ -142,6 +192,10 @@ const Comum = (function () {
     iniciais: iniciais,
     escapar: escapar,
     variacao: variacao,
-    iniciarPagina: iniciarPagina
+    iniciarPagina: iniciarPagina,
+    mostrarFalha: mostrarFalha,
+    esconderFalha: esconderFalha,
+    linhaCarregando: linhaCarregando,
+    carregar: carregar
   };
 })();

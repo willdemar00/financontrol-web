@@ -280,6 +280,24 @@ tbody tr:hover .acoes-linha { opacity: 1; }
 .botoes-modal { display: flex; gap: 10px; margin-top: 22px; }
 .botoes-modal .botao { flex: 1; height: 38px; }
 
+/* ------------------------------------------- carregamento e falhas da API */
+body.carregando::before {
+  content: ""; position: fixed; top: 0; left: -40%; z-index: 100;
+  width: 40%; height: 3px; background: var(--primaria);
+  animation: carregando 1s ease-in-out infinite;
+}
+@keyframes carregando { to { left: 100%; } }
+
+.faixa-falha {
+  display: flex; align-items: center; gap: 10px; margin: 18px 28px 0;
+  padding: 10px 12px 10px 14px; border-radius: 8px; font-size: 13px;
+  background: var(--negativo-fundo); color: var(--negativo); border: 1px solid var(--negativo-borda);
+}
+.faixa-falha span { flex: 1; }
+.faixa-falha .botao { flex: none; }
+
+button:disabled { opacity: .6; cursor: wait; }
+
 /* ---------------------------------------------------------------- responsivo */
 @media (max-width: 900px) {
   .acesso-lado { display: none; }
