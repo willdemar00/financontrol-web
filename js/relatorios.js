@@ -169,39 +169,21 @@
 
   /* ---------------------------------------------------- exportação CSV */
 
-  document.getElementById('btn-exportar').addEventListener('click', function () {
+  /* O arquivo é montado pela API (GET /api/relatorios/exportar), já com os
+     totais do mês e no formato do Excel em português. */
+  const botaoExportar = document.getElementById('btn-exportar');
+
+  botaoExportar.addEventListener('click', async function () {
     const mes = campoMes.value || Comum.mesAtual();
-    const lancamentos = Dados.lancamentosDoMes(mes);
 
-    if (lancamentos.length === 0) {
-      alert('Não há lançamentos neste mês para exportar.');
-      return;
+    botaoExportar.disabled = true;
+    try {
+      await Dados.exportarCsv(mes);
+    } catch (erro) {
+      alert(erro.message);
+    } finally {
+      botaoExportar.disabled = false;
     }
-
-    const linhas = [['Data', 'Tipo', 'Descrição', 'Categoria', 'Forma de pagamento', 'Valor']];
-    lancamentos.forEach(function (l) {
-      linhas.push([
-        Comum.data(l.data),
-        l.tipo === 'receita' ? 'Receita' : 'Despesa',
-        l.descricao,
-        l.categoria,
-        l.formaPagamento || '',
-        Number(l.valor).toFixed(2).replace('.', ',')
-      ]);
-    });
-
-    /* Usa ponto e virgula como separador, padrão do Excel em portugues. */
-    const csv = linhas.map(function (linha) {
-      return linha.map(function (celula) { return '"' + String(celula).replace(/"/g, '""') + '"'; })
-                  .join(';');
-    }).join('\n');
-
-    const arquivo = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(arquivo);
-    link.download = 'financontrol-' + mes + '.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
   });
 
   /* ------------------------------------------------------------ desenhar */
