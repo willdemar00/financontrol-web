@@ -153,7 +153,7 @@
         const subiu = variacao > 0;
         const classe = subiu ? 'etiqueta-negativa' : 'etiqueta-positiva';
         comparativo = '<span class="etiqueta ' + (Math.abs(variacao) < 0.5 ? '' : classe) + '">' +
-          (subiu ? '+' : '−') + Math.abs(variacao).toFixed(1).replace('.', ',') + '%</span>';
+          (variacao === 0 ? '' : subiu ? '+' : '−') + Math.abs(variacao).toFixed(1).replace('.', ',') + '%</span>';
       }
 
       return '<tr>' +
