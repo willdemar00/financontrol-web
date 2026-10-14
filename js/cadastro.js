@@ -1,7 +1,8 @@
 /* ==========================================================================
    cadastro.js - Cadastro de usuarios (RF01)
    Regras aplicadas: RN01 - e-mail único; RN02 - senha com 8+ caracteres,
-   contendo letras e números.
+   contendo letras e números. As regras sao conferidas aqui, para avisar o
+   usuário na hora, e de novo na API, que grava a conta no banco de dados.
    ========================================================================== */
 
 (function () {
@@ -16,6 +17,8 @@
   const aviso = document.getElementById('aviso');
   const barras = document.getElementById('forca').children;
   const forcaTexto = document.getElementById('forca-texto');
+  const botao = form.querySelector('button[type="submit"]');
+  const textoBotao = botao.textContent.trim();
 
   function mostrarAviso(mensagem, tipo) {
     aviso.textContent = mensagem;
@@ -44,7 +47,7 @@
     forcaTexto.textContent = textos[forca];
   });
 
-  form.addEventListener('submit', function (evento) {
+  form.addEventListener('submit', async function (evento) {
     evento.preventDefault();
 
     const nome = campoNome.value.trim();
@@ -77,15 +80,21 @@
       return;
     }
 
-    const resultado = Dados.cadastrarUsuario(nome, email, senha);
+    /* Envia para a API, que valida de novo, criptografa a senha e devolve
+       o token da sessao. */
+    botao.disabled = true;
+    botao.textContent = 'Criando conta...';
 
-    if (!resultado.ok) {
-      mostrarAviso(resultado.mensagem, 'erro');
+    try {
+      await Dados.cadastrarUsuario(nome, email, senha);
+    } catch (erro) {
+      mostrarAviso(erro.message, 'erro');
+      botao.disabled = false;
+      botao.textContent = textoBotao;
       return;
     }
 
-    /* Cadastro concluido: abre a sessao e leva o usuário ao painel. */
-    Dados.abrirSessao(resultado.usuario);
+    /* Cadastro concluido: a sessao ja esta aberta, leva o usuário ao painel. */
     mostrarAviso('Conta criada com sucesso! Redirecionando...', 'sucesso');
     setTimeout(function () { window.location.href = 'painel.html'; }, 800);
   });
