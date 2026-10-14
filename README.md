@@ -1,11 +1,16 @@
 # FinanControl — Aplicativo de Controle Financeiro Pessoal
 
-Projeto front-end desenvolvido para a **Entrega 2** do Projeto Integrador II do
+Front-end (projeto UI) do FinanControl, desenvolvido no Projeto Integrador II do
 curso de Tecnologia em Sistemas para Internet (UESPI / UAPI).
 
 O FinanControl permite que o usuário registre suas receitas e despesas,
 acompanhe o saldo do mês, visualize relatórios por categoria e defina metas
 financeiras.
+
+| Entrega | O que foi feito |
+|---------|-----------------|
+| Entrega 2 | Telas em HTML, CSS e JavaScript, com os dados guardados no navegador (`localStorage`). |
+| **Entrega 3** | Telas ligadas à **API REST** ([financontrol-api](https://github.com/willdemar00/financontrol-api)): os dados passam a ficar em um banco relacional, com login por token e senha criptografada. Nova tela de **Categorias**. |
 
 ---
 
@@ -24,43 +29,64 @@ financeiras.
 
 ---
 
-## Tecnologias front-end definidas
+## Tecnologias
+
+### Front-end (este repositório)
 
 | Tecnologia | Uso no projeto |
 |------------|----------------|
-| **HTML5** | Estrutura semântica das páginas, formulários com validação nativa e atributos de acessibilidade (`aria-*`, `role`). |
-| **CSS3** | Estilização completa, sem framework. Uso de variáveis CSS (`:root`) para o tema, Flexbox e CSS Grid no layout e *media queries* para a responsividade. |
-| **JavaScript (ES6, sem framework)** | Toda a interatividade: validações, montagem dinâmica das listas, gráficos em SVG e persistência dos dados. |
-| **SVG inline** | Ícones e gráficos (linha, barras e rosca) desenhados sem bibliotecas externas, o que mantém o projeto leve e sem dependências. |
-| **Web Storage API (`localStorage`)** | Armazenamento local dos dados enquanto o backend não existe. Todo o acesso está isolado em `js/dados.js`. |
+| **HTML5** | Estrutura semântica das páginas, formulários e atributos de acessibilidade (`aria-*`, `role`). |
+| **CSS3** | Estilização completa, sem framework: variáveis CSS, Flexbox, CSS Grid e *media queries*. |
+| **JavaScript (ES2017+, sem framework)** | Interatividade, validações e gráficos. Usa `fetch` e `async/await` para conversar com a API. |
+| **SVG inline** | Ícones e gráficos (linha, barras e rosca) desenhados sem bibliotecas externas. |
+| **Fetch API + JSON** | Comunicação com o back-end. Todo o acesso fica isolado em `js/dados.js`. |
 | **Git e GitHub** | Versionamento do código e repositório remoto compartilhado pelo grupo. |
-| **Visual Studio Code** | Editor utilizado pela equipe. |
 
-### Por que não usamos framework
+### Back-end (repositório [financontrol-api](https://github.com/willdemar00/financontrol-api))
 
-O sistema desta etapa é composto por telas de formulário e listagem, sem
-necessidade de build, empacotador ou gerenciador de pacotes. Usando apenas
-HTML, CSS e JavaScript o projeto **abre com um duplo clique no `index.html`**,
-sem instalar nada — o que facilita a execução por todos os integrantes do grupo
-e pelo professor na correção.
+Node.js + Express 5, banco relacional SQLite, senhas com bcrypt, autenticação
+por JSON Web Token e testes automatizados com `node:test`. Os detalhes estão no
+README da API.
 
 ---
 
 ## Como executar
 
-Não é necessário instalar nada nem rodar servidor.
+O front-end precisa da API rodando.
 
-1. Baixe ou clone o repositório:
-   ```bash
-   git clone <url-do-repositorio>
-   ```
-2. Abra a pasta do projeto.
-3. Dê um duplo clique em **`index.html`** (ou clique com o botão direito →
-   *Abrir com* → seu navegador).
+**1. Suba a API** (detalhes no README do [financontrol-api](https://github.com/willdemar00/financontrol-api)):
 
-> Na primeira vez, crie uma conta pela tela **"Criar uma conta gratuita"**.
-> Ao entrar, o sistema cadastra automaticamente alguns lançamentos de exemplo
-> para que as telas não apareçam vazias durante a apresentação.
+```bash
+git clone https://github.com/willdemar00/financontrol-api.git
+cd financontrol-api
+npm install
+npm run seed
+npm start
+```
+
+**2. Abra o front-end:**
+
+```bash
+git clone https://github.com/willdemar00/financontrol-web.git
+```
+
+Dê um duplo clique em **`index.html`**. Também funciona com a extensão
+*Live Server* do VS Code ou qualquer servidor de arquivos estáticos.
+
+O endereço da API fica em `js/config.js` (padrão: `http://localhost:3333/api`).
+Se ela não estiver no ar, as telas mostram um aviso com o botão
+**Tentar novamente**.
+
+### Acesso para avaliação
+
+Depois de `npm run seed` na API, entre com:
+
+| E-mail | Senha |
+|--------|-------|
+| `demo@financontrol.com` | `demo1234` |
+
+Esse usuário já tem seis meses de lançamentos e quatro metas. Também é possível
+criar uma conta nova em **"Criar uma conta gratuita"**.
 
 ---
 
@@ -74,65 +100,65 @@ financontrol-web/
 ├── lancamentos.html    → listagem e registro de receitas e despesas
 ├── relatorios.html     → relatórios e gráficos por categoria
 ├── metas.html          → metas financeiras
+├── categorias.html     → cadastro de categorias (novo na Entrega 3)
 ├── css/
 │   └── style.css       → folha de estilo única do projeto
 ├── js/
-│   ├── dados.js        → camada de acesso aos dados (localStorage)
-│   ├── comum.js        → funções compartilhadas e menu lateral
+│   ├── config.js       → endereço da API
+│   ├── dados.js        → comunicação com a API (fetch + token)
+│   ├── comum.js        → menu, formatação, avisos de carregamento e de erro
 │   ├── login.js        → autenticação
 │   ├── cadastro.js     → cadastro de usuário
 │   ├── painel.js       → página inicial
 │   ├── lancamentos.js  → receitas e despesas
 │   ├── relatorios.js   → relatórios e exportação CSV
-│   └── metas.js        → metas financeiras
+│   ├── metas.js        → metas financeiras
+│   └── categorias.js   → categorias de receitas e despesas
 ├── assets/
 │   └── favicon.svg
 └── README.md
 ```
 
-A separação em `dados.js` é proposital: **todo o acesso a dados passa por esse
-arquivo**. Na Entrega 3, quando o backend for implementado, basta trocar o
-corpo dessas funções por chamadas à API — as telas não precisarão ser alteradas.
+Na Entrega 2, o acesso a dados foi isolado em `dados.js` justamente para esta
+etapa: as funções mantiveram os mesmos nomes e passaram a chamar a API. Como a
+comunicação pela rede é assíncrona, as telas agora esperam a resposta
+(`await`) antes de desenhar.
 
 ---
 
-## Tarefas da Sprint 1 implementadas
+## Tarefas da Sprint 2 — projeto UI
 
-Tarefas retiradas da lista **Sprint Inicial** do quadro do grupo no Trello
-(mínimo exigido: 4 tarefas).
+Tarefas da lista **Sprint 2 — Entrega 3** do quadro do grupo no Trello
+(mínimo exigido: 8 tarefas). Cada tarefa corresponde a um commit neste repositório.
 
 | # | Tarefa (cartão no Trello) | Requisito | Onde está | Situação |
 |---|---------------------------|-----------|-----------|----------|
-| 1 | Configurar o ambiente de desenvolvimento e o repositório | — | estrutura de pastas, `.gitignore`, `README.md` | ✅ Concluído |
-| 2 | Desenvolver a tela de login e a autenticação | RF02 | `index.html` + `js/login.js` | ✅ Concluído |
-| 3 | Criar cadastro de usuários | RF01 | `cadastro.html` + `js/cadastro.js` | ✅ Concluído |
-| 4 | Desenvolver a página inicial (painel) | RF06 | `painel.html` + `js/painel.js` | ✅ Concluído |
-| 5 | Implementar o registro de receitas | RF03 | `lancamentos.html` + `js/lancamentos.js` | ✅ Concluído |
-| 6 | Implementar o registro de despesas | RF04 | `lancamentos.html` + `js/lancamentos.js` | ✅ Concluído |
-| 7 | Modelar e implementar o banco de dados | RF10 | estrutura de dados definida em `js/dados.js` | 🔄 Em andamento (backend na Entrega 3) |
-
-### Outros requisitos já atendidos nesta entrega
-
-- **RF05** — categorização dos lançamentos (categorias por tipo);
-- **RF09** — edição e exclusão de lançamentos;
-- **RF07 / RF08** — relatórios mensais com gráficos de barras e de rosca;
-- **RF11** — cadastro e acompanhamento de metas financeiras;
-- **RF12** — exportação do relatório do mês em CSV;
-- **RNF01** — layout responsivo (computador, tablet e celular);
-- **RNF04** — interface simples, seguindo o protótipo aprovado na Entrega 1;
-- **RNF05** — senha não é gravada em texto puro (a criptografia definitiva será
-  feita no backend, na Entrega 3).
+| 1 | Criar o módulo de comunicação com a API | — | `js/config.js`, `js/dados.js` | ✅ Concluído |
+| 2 | Integrar o cadastro de usuários à API | RF01 | `js/cadastro.js` | ✅ Concluído |
+| 3 | Integrar o login à API e controlar a sessão por token | RF02 | `js/login.js`, `js/dados.js` | ✅ Concluído |
+| 4 | Exibir avisos de carregamento e de falha de conexão | RNF04 | `js/comum.js`, `css/style.css` | ✅ Concluído |
+| 5 | Integrar o painel e o saldo do mês à API | RF06 | `js/painel.js` | ✅ Concluído |
+| 6 | Integrar o registro, a edição e a exclusão de lançamentos à API | RF03, RF04, RF09 | `js/lancamentos.js` | ✅ Concluído |
+| 7 | Desenvolver a tela de cadastro de categorias | RF05 | `categorias.html`, `js/categorias.js` | ✅ Concluído |
+| 8 | Integrar os relatórios e os gráficos à API | RF07, RF08 | `js/relatorios.js` | ✅ Concluído |
+| 9 | Integrar a exportação do relatório em CSV à API | RF12 | `js/relatorios.js`, `js/dados.js` | ✅ Concluído |
+| 10 | Integrar as metas financeiras à API | RF11 | `js/metas.js` | ✅ Concluído |
 
 ---
 
-## Validações implementadas
+## Validações
+
+As validações acontecem nas telas, para avisar o usuário na hora, e **de novo na
+API**, que é quem grava os dados:
 
 - E-mail único por usuário (**RN01**);
 - Senha com no mínimo 8 caracteres, contendo letras e números (**RN02**);
-- Confirmação de senha;
+- Senha guardada só como hash bcrypt na API (**RNF05**);
 - Valor do lançamento obrigatoriamente maior que zero;
-- Descrição e data obrigatórias;
-- Bloqueio de acesso às páginas internas sem sessão aberta;
+- Descrição, data e categoria obrigatórias; a categoria precisa ser do mesmo tipo do lançamento;
+- Valor já guardado de uma meta não pode passar do objetivo;
+- Categoria com lançamentos não pode ser excluída;
+- Páginas internas exigem sessão aberta; com o token vencido, o sistema volta para o login;
 - Escape de HTML nos textos digitados pelo usuário, evitando injeção de código.
 
 ---
@@ -140,13 +166,13 @@ Tarefas retiradas da lista **Sprint Inicial** do quadro do grupo no Trello
 ## Links do projeto
 
 - **Quadro no Trello:** https://trello.com/b/Ouj8Q5Dn
+- **API (back-end):** https://github.com/willdemar00/financontrol-api
 - **Documentação completa (PI II):** arquivo `FinanControl_PI2.docx` entregue na plataforma
 
 ---
 
-## Próximos passos (Entrega 3)
+## Próximos passos
 
-- Implementar o backend e o banco de dados relacional;
-- Substituir o `localStorage` por chamadas à API REST;
-- Aplicar criptografia real de senha (bcrypt) e autenticação por token;
-- Continuar a evolução das telas e a atualização da documentação.
+- Recuperação de senha por e-mail;
+- Publicar a API e o front-end em um servidor na nuvem;
+- Revisão de acessibilidade e usabilidade (RNF04) e manual básico do usuário.
