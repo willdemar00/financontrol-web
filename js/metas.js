@@ -1,7 +1,8 @@
 /* ==========================================================================
    metas.js - Metas financeiras (RF11)
    Permite cadastrar objetivos de economia, acompanhar o percentual alcancado
-   e editar ou excluir cada meta.
+   e editar ou excluir cada meta. As metas ficam gravadas pela API, que
+   também calcula o percentual e se a meta já foi concluida.
    ========================================================================== */
 
 (function () {
@@ -13,6 +14,8 @@
   const modal = document.getElementById('modal');
   const form = document.getElementById('form-meta');
   const aviso = document.getElementById('aviso');
+  const botaoSalvar = form.querySelector('button[type="submit"]');
+  const corpo = document.getElementById('lista');
 
   const campos = {
     id: document.getElementById('id'),
@@ -63,7 +66,7 @@
     if (evento.key === 'Escape' && modal.classList.contains('aberto')) fecharModal();
   });
 
-  form.addEventListener('submit', function (evento) {
+  form.addEventListener('submit', async function (evento) {
     evento.preventDefault();
 
     const descricao = campos.descricao.value.trim();
@@ -88,24 +91,32 @@
       return;
     }
 
-    Dados.salvarMeta({
-      id: campos.id.value || undefined,
-      descricao: descricao,
-      valorAlvo: alvo,
-      valorAtual: atual,
-      prazo: campos.prazo.value,
-      prioridade: campos.prioridade.value
-    });
+    botaoSalvar.disabled = true;
+    try {
+      await Dados.salvarMeta({
+        id: campos.id.value || undefined,
+        descricao: descricao,
+        valorAlvo: alvo,
+        valorAtual: atual,
+        prazo: campos.prazo.value,
+        prioridade: campos.prioridade.value
+      });
+    } catch (erro) {
+      aviso.textContent = erro.message;
+      aviso.className = 'aviso erro';
+      return;
+    } finally {
+      botaoSalvar.disabled = false;
+    }
 
     fecharModal();
-    desenhar();
+    Comum.carregar(desenhar);
   });
 
   /* ------------------------------------------------------------- listagem */
 
   function situacao(meta) {
-    const concluida = Number(meta.valorAtual) >= Number(meta.valorAlvo);
-    if (concluida) {
+    if (meta.concluida) {
       return '<span class="etiqueta">' +
         '<svg class="icone icone-p" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>Concluída</span>';
     }
@@ -120,15 +131,12 @@
       '<circle cx="12" cy="12" r="5"/></svg>' + texto + '</span>';
   }
 
-  function desenhar() {
-    const metas = Dados.listarMetas();
-    const corpo = document.getElementById('lista');
+  async function desenhar() {
+    const metas = await Dados.listarMetas();
 
     const guardado = metas.reduce(function (s, m) { return s + Number(m.valorAtual); }, 0);
     const objetivo = metas.reduce(function (s, m) { return s + Number(m.valorAlvo); }, 0);
-    const concluidas = metas.filter(function (m) {
-      return Number(m.valorAtual) >= Number(m.valorAlvo);
-    });
+    const concluidas = metas.filter(function (m) { return m.concluida; });
 
     document.getElementById('total-guardado').textContent = Comum.moeda(guardado);
     document.getElementById('objetivo-total').textContent = Comum.moeda(objetivo);
@@ -149,7 +157,7 @@
 
     /* Meta em andamento que esta mais perto de ser alcancada. */
     const proxima = metas
-      .filter(function (m) { return Number(m.valorAtual) < Number(m.valorAlvo); })
+      .filter(function (m) { return !m.concluida; })
       .sort(function (a, b) {
         return (b.valorAtual / b.valorAlvo) - (a.valorAtual / a.valorAlvo);
       })[0];
@@ -167,8 +175,8 @@
     }
 
     corpo.innerHTML = metas.map(function (m) {
-      const percentual = Math.min(100, Math.round((m.valorAtual / m.valorAlvo) * 100));
-      const concluida = percentual >= 100;
+      const percentual = m.percentual;
+      const concluida = m.concluida;
 
       return '<tr>' +
         '<td class="celula-desc"><b>' + Comum.escapar(m.descricao) + '</b>' +
@@ -194,21 +202,24 @@
 
     document.querySelectorAll('[data-editar]').forEach(function (botao) {
       botao.addEventListener('click', function () {
-        const meta = metas.find(function (m) { return m.id === botao.dataset.editar; });
+        const meta = metas.find(function (m) { return m.id === Number(botao.dataset.editar); });
         abrirModal(meta);
       });
     });
 
     document.querySelectorAll('[data-excluir]').forEach(function (botao) {
       botao.addEventListener('click', function () {
-        const meta = metas.find(function (m) { return m.id === botao.dataset.excluir; });
+        const meta = metas.find(function (m) { return m.id === Number(botao.dataset.excluir); });
         if (meta && confirm('Excluir a meta "' + meta.descricao + '"?')) {
-          Dados.removerMeta(meta.id);
-          desenhar();
+          Comum.carregar(async function () {
+            await Dados.removerMeta(meta.id);
+            await desenhar();
+          });
         }
       });
     });
   }
 
-  desenhar();
+  Comum.linhaCarregando(corpo, 7);
+  Comum.carregar(desenhar);
 })();
