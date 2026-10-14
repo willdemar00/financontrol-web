@@ -80,6 +80,7 @@ const Comum = (function () {
     lancamentos: '<path d="M7 10h14M7 10l3-3M7 10l3 3"/><path d="M17 14H3M17 14l-3-3M17 14l-3 3"/>',
     relatorios: '<path d="M3 20h18"/><rect x="5" y="11" width="3.5" height="7" rx="1"/><rect x="10.2" y="6" width="3.5" height="12" rx="1"/><rect x="15.5" y="13.5" width="3.5" height="4.5" rx="1"/>',
     metas: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+    categorias: '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
     marca: '<path d="M12 3v18M17 7H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H6"/>',
     sair: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/>'
   };
@@ -88,7 +89,8 @@ const Comum = (function () {
     { id: 'painel', arquivo: 'painel.html', texto: 'Painel' },
     { id: 'lancamentos', arquivo: 'lancamentos.html', texto: 'Lançamentos' },
     { id: 'relatorios', arquivo: 'relatorios.html', texto: 'Relatórios' },
-    { id: 'metas', arquivo: 'metas.html', texto: 'Metas' }
+    { id: 'metas', arquivo: 'metas.html', texto: 'Metas' },
+    { id: 'categorias', arquivo: 'categorias.html', texto: 'Categorias' }
   ];
 
   function svg(caminho, classe) {

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categorias | FinanControl</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="layout">
+    <aside class="menu-lateral" id="menu-lateral"></aside>
+
+    <div class="conteudo">
+      <header class="barra-topo">
+        <div>
+          <h1>Categorias</h1>
+          <p class="contexto" id="contexto">Carregando...</p>
+        </div>
+        <div class="acoes-topo">
+          <button class="botao botao-primario" id="btn-nova">
+            <svg class="icone icone-p" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Nova categoria
+          </button>
+        </div>
+      </header>
+
+      <main class="corpo">
+        <section class="grade-2">
+          <article class="cartao">
+            <div class="cartao-topo" style="padding-bottom:12px">
+              <div>
+                <div class="cartao-titulo">Categorias de receita</div>
+                <div class="cartao-desc" id="resumo-receita">--</div>
+              </div>
+              <button class="botao botao-contorno botao-p" data-nova="receita">
+                <svg class="icone icone-p" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Adicionar
+              </button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th style="text-align:right">Lançamentos</th>
+                  <th style="width:70px"></th>
+                </tr>
+              </thead>
+              <tbody id="lista-receita"></tbody>
+            </table>
+          </article>
+
+          <article class="cartao">
+            <div class="cartao-topo" style="padding-bottom:12px">
+              <div>
+                <div class="cartao-titulo">Categorias de despesa</div>
+                <div class="cartao-desc" id="resumo-despesa">--</div>
+              </div>
+              <button class="botao botao-contorno botao-p" data-nova="despesa">
+                <svg class="icone icone-p" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                Adicionar
+              </button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th style="text-align:right">Lançamentos</th>
+                  <th style="width:70px"></th>
+                </tr>
+              </thead>
+              <tbody id="lista-despesa"></tbody>
+            </table>
+          </article>
+        </section>
+
+        <p class="nota-rodape">
+          Categorias com lançamentos não podem ser excluídas, para não deixar registros sem
+          classificação. Se precisar, renomeie a categoria.
+        </p>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================= modal de categoria ======================== -->
+  <div class="fundo-modal" id="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-topo">
+        <div>
+          <h3 id="modal-titulo">Nova categoria</h3>
+          <p id="modal-desc">Organize seus lançamentos do jeito que preferir.</p>
+        </div>
+        <button class="fechar" id="btn-fechar" aria-label="Fechar">
+          <svg class="icone" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <form id="form-categoria" novalidate>
+        <input type="hidden" id="id">
+
+        <div class="seletor-tipo" id="seletor-tipo">
+          <button type="button" id="aba-receita">Receita</button>
+          <button type="button" id="aba-despesa" class="ativo">Despesa</button>
+        </div>
+
+        <div class="campo">
+          <label for="nome">Nome da categoria</label>
+          <div class="entrada">
+            <input type="text" id="nome" maxlength="40" placeholder="Ex.: Pets, Academia, Assinaturas" required>
+          </div>
+        </div>
+
+        <p class="aviso" id="aviso" role="alert"></p>
+
+        <div class="botoes-modal">
+          <button type="button" class="botao botao-contorno" id="btn-cancelar">Cancelar</button>
+          <button type="submit" class="botao botao-primario">Salvar categoria</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/dados.js"></script>
+  <script src="js/comum.js"></script>
+  <script src="js/categorias.js"></script>
+</body>
+</html>
