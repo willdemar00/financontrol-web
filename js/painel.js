@@ -2,6 +2,8 @@
    painel.js - Página inicial do sistema (RF06 - exibicao do saldo)
    Mostra o saldo do mês, os indicadores de receitas e despesas, o gráfico de
    evolução do saldo acumulado e os últimos lançamentos registrados.
+   Os totais sao calculados pela API (GET /api/resumo) e os lançamentos e as
+   metas sao buscados em paralelo para a tela abrir mais rapido.
    ========================================================================== */
 
 (function () {
@@ -12,15 +14,15 @@
 
   const campoMes = document.getElementById('mes');
   campoMes.value = Comum.mesAtual();
-  campoMes.addEventListener('change', desenhar);
+  campoMes.addEventListener('change', function () { Comum.carregar(desenhar); });
 
   /* ------------------------------------------------------------- gráfico */
 
   /* Desenha a linha do saldo acumulado dia a dia dentro do mês escolhido. */
-  function desenharGrafico(mes) {
+  function desenharGrafico(lancamentosDoMes) {
     const svg = document.getElementById('grafico-saldo');
-    const lancamentos = Dados.lancamentosDoMes(mes).slice().sort(function (a, b) {
-      return a.data.localeCompare(b.data);
+    const lancamentos = lancamentosDoMes.slice().sort(function (a, b) {
+      return a.data.localeCompare(b.data) || a.id - b.id;
     });
 
     const largura = 620;
@@ -68,9 +70,9 @@
 
   /* --------------------------------------------------------------- lista */
 
-  function desenharLista(mes) {
+  function desenharLista(lancamentosDoMes) {
     const corpo = document.getElementById('lista');
-    const lancamentos = Dados.lancamentosDoMes(mes).slice(0, 6);
+    const lancamentos = lancamentosDoMes.slice(0, 6);
 
     if (lancamentos.length === 0) {
       corpo.innerHTML = '<tr><td colspan="4" class="vazio">' +
@@ -96,10 +98,18 @@
 
   /* ------------------------------------------------------------ desenhar */
 
-  function desenhar() {
+  async function desenhar() {
     const mes = campoMes.value || Comum.mesAtual();
-    const resumo = Dados.resumoDoMes(mes);
-    const anterior = Dados.resumoDoMes(Comum.mesAnterior(mes));
+
+    const respostas = await Promise.all([
+      Dados.resumoDoMes(mes),
+      Dados.lancamentosDoMes(mes),
+      Dados.listarMetas()
+    ]);
+    const resumo = respostas[0];
+    const anterior = resumo.mesAnterior;
+    const lancamentos = respostas[1];
+    const metas = respostas[2];
 
     document.getElementById('rotulo-mes').textContent = Comum.nomeDoMes(mes).split(' de ')[0];
     document.getElementById('saldo').textContent = Comum.moeda(resumo.saldo);
@@ -136,27 +146,22 @@
     }
 
     /* Metas em andamento. */
-    const metas = Dados.listarMetas();
-    const concluidas = metas.filter(function (m) {
-      return Number(m.valorAtual) >= Number(m.valorAlvo);
-    });
+    const concluidas = metas.filter(function (m) { return m.concluida; });
     document.getElementById('metas').innerHTML = (metas.length - concluidas.length) +
       ' <span style="font-size:15px;font-weight:500;color:var(--texto-suave)">de ' + metas.length + '</span>';
 
-    const emAndamento = metas.find(function (m) {
-      return Number(m.valorAtual) < Number(m.valorAlvo);
-    });
+    const emAndamento = metas.find(function (m) { return !m.concluida; });
     document.getElementById('metas-info').textContent = emAndamento
-      ? emAndamento.descricao + ' em ' +
-        Math.round((emAndamento.valorAtual / emAndamento.valorAlvo) * 100) + '% do objetivo'
+      ? emAndamento.descricao + ' em ' + emAndamento.percentual + '% do objetivo'
       : (metas.length ? 'Todas as metas foram concluídas.' : 'Nenhuma meta cadastrada ainda.');
 
     document.getElementById('resumo-lista').textContent =
       resumo.qtdReceitas + ' receitas · ' + resumo.qtdDespesas + ' despesas neste mês';
 
-    desenharGrafico(mes);
-    desenharLista(mes);
+    desenharGrafico(lancamentos);
+    desenharLista(lancamentos);
   }
 
-  desenhar();
+  Comum.linhaCarregando(document.getElementById('lista'), 4);
+  Comum.carregar(desenhar);
 })();
